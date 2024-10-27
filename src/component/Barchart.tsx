@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import './Bar.css';
-
 type BarChartProps = {
     world: { totalPopulation: string }; // World population data
     data: { countryName: string; totalPopulation: string }[];
@@ -30,9 +29,9 @@ const formatTotal = (num: string) => {
 const BarChart: React.FC<BarChartProps> = ({ data, world }) => {
     const [sortedData, setSortedData] = useState(data);
     const [colorMap, setColorMap] = useState<Map<string, string>>(new Map());
-
+    const [flagUrls, setFlagUrls] = useState<Map<string, string>>(new Map());
     useEffect(() => {
-        const newColorMap = new Map<string, string>(colorMap); // Copy existing color map
+        const newColorMap = new Map<string, string>(colorMap);
         data.forEach(entry => {
             if (!newColorMap.has(entry.countryName)) {
                 newColorMap.set(entry.countryName, getRandomColor());
@@ -42,8 +41,44 @@ const BarChart: React.FC<BarChartProps> = ({ data, world }) => {
 
         const sorted = [...data].sort((a, b) => Number(b.totalPopulation) - Number(a.totalPopulation));
         setSortedData(sorted);
-    }, [data]); // Only depend on data for sorting and color mapping
 
+        // Load flag URLs for each country
+        const loadFlags = async () => {
+            const newFlagUrls = new Map<string, string>();
+            for (const entry of sorted) {
+                const url = await getFlagUrl(entry.countryName); // Get flag URL
+                newFlagUrls.set(entry.countryName, url);
+            }
+            setFlagUrls(newFlagUrls);
+        };
+        loadFlags();
+    }, [data]); 
+
+    const getFlagUrl = async (countryName: string): Promise<string> => {
+        const flagFormats = ['png', 'jpg']; // Supported formats
+        for (const format of flagFormats) {
+            const imgUrl = new URL(`../assets/flags/${countryName.toLowerCase()}.${format}`, import.meta.url).href;
+            const img = new Image();
+            
+            // Return a Promise that resolves when the image loads successfully
+            const loadImage = new Promise<string>((resolve) => {
+                img.onload = () => resolve(imgUrl);
+                img.onerror = () => {
+                    console.warn(`${format} not found for ${countryName}`);
+                    resolve(''); // Resolve with empty string on error to indicate failure
+                };
+                img.src = imgUrl; // Start loading the image
+            });
+    
+            const result = await loadImage; // Wait for the image loading process
+            if (result) {
+                return result; // If a valid URL was resolved, return it
+            }
+        }
+        // Fallback to a default image if all attempts fail
+        return '/path/to/default-flag.png'; // Specify your default image path here
+    };
+    
     const maxPopulation = Math.max(...sortedData.map(entry => Number(entry.totalPopulation)), 1);
     const lineSpacing = 500000000;
     const lineCount = Math.ceil(maxPopulation / lineSpacing);
@@ -83,26 +118,31 @@ const BarChart: React.FC<BarChartProps> = ({ data, world }) => {
             })}
 
             {/* Bars with Flags */}
-            {sortedData.map((entry, index) => (
+            {sortedData.map((entry, index) => {
+ const imgUrl = flagUrls.get(entry.countryName) || '/path/to/default-flag.png';
+        
+            return(
                 <div
                     key={entry.countryName}
                     style={{
                         display: index === 10 ? 'none' : 'flex',
                         alignItems: 'center',
                         margin: '5px 0',
-                        transition: 'transform 0.5s ease-in-out',
+                        transition: 'transform 1s ease-in-out',
                         transform: index === 0 ? `translateY(-3px)` : `translateY(${index * 40}px)`,
                         position: 'absolute',
                         top: 0,
                         width: '100%',
                     }}
                 >
-                    <img
-                        src={`/assets/flags/${entry.countryName.toLowerCase()}.png`} // Adjust path based on your project structure
-                        alt={`${entry.countryName} flag`}
-                        style={{ width: '30px', height: '20px', marginRight: '5px' }}
-                    />
-
+                   <img
+                            src={imgUrl}
+                            alt={`${entry.countryName} flag`}
+                            style={{ width: '30px', height: '20px', marginRight: '5px' }}
+                            // onError={(e) => {
+                            //     e.currentTarget.src = '/path/to/default-flag.png'; // Use a default flag if it fails to load
+                            // }}
+                        />
                     <div
                         style={{
                             height: '30px',
@@ -115,7 +155,7 @@ const BarChart: React.FC<BarChartProps> = ({ data, world }) => {
                     >
                     </div>
                 </div>
-            ))}
+            )})}
             {/* World Population Display */}
             {world.totalPopulation && (
                 <div style={{
