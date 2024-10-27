@@ -1,5 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
-import * as d3 from 'd3';
+import React, {useEffect, useState } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore'; // Ensure you have these imports
 import db from './firebaseConfig'; // Adjust the import based on your Firebase setup
 import './App.css'
@@ -16,7 +15,7 @@ export type PopulationData = {
 };
 
 const PopulationGrowthChart: React.FC = () => {
-  const [year, setYear] = useState<number>(1950); // Start year
+  const year = (1950); // Start year
   const [populationData, setPopulationData] = useState<PopulationData[]>([]);
 
   const fetchPopulationDataByYear = async (filterYear: number) => {
