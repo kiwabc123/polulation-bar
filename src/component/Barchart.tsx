@@ -49,7 +49,7 @@ const BarChart: React.FC<BarChartProps> = ({ data, world }) => {
     const lineCount = Math.ceil(maxPopulation / lineSpacing);
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', margin: '20px 0', position: 'relative', height: '400px', borderLeft: 'solid black 1px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', margin: '0 0', position: 'relative', height: '400px', borderLeft: 'solid black 1px' }}>
             {/* Horizontal lines */}
             {Array.from({ length: lineCount }, (_, i) => {
                 const value = (i + 1) * lineSpacing;
